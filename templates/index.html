@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}DocuFlex{% endblock %}
+
+{% block header_actions %}
+  <a class="btn" href="/convert">Get Started</a>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h2>Choose an Operation</h2>
+    <div class="grid">
+      <a class="tool link-card" href="/convert">
+        <h3>Document Conversion</h3>
+        <p class="muted">PDF ⇄ Word, Image → PDF, PDF → Image</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/pdf">
+        <h3>PDF Utilities</h3>
+        <p class="muted">Merge, Split, Reorder, Compress</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/ocr">
+        <h3>OCR</h3>
+        <p class="muted">Image → Text, PDF → Text</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/qr">
+        <h3>QR Generator</h3>
+        <p class="muted">Advanced QR styling & download</p>
+        <span class="btn">Open</span>
+      </a>
+    </div>
+  </section>
+{% endblock %}

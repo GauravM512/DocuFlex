@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}DocuFlex • Conversion{% endblock %}
+{% block header_subtitle %}Document Conversion{% endblock %}
+
+{% block header_actions %}
+  <a class="btn outline" href="/">Home</a>
+  <a class="btn outline" href="/pdf">PDF Utilities</a>
+  <a class="btn outline" href="/ocr">OCR</a>
+  <a class="btn outline" href="/qr">QR Generator</a>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h2>Document Conversion</h2>
+    <div class="grid">
+      <a class="tool link-card" href="/convert/pdf-to-word">
+        <h3>PDF → Word</h3>
+        <p class="muted">Convert PDF text into a DOCX file.</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/convert/word-to-pdf">
+        <h3>Word → PDF</h3>
+        <p class="muted">Render DOCX text into a PDF.</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/convert/image-to-pdf">
+        <h3>JPG/PNG → PDF</h3>
+        <p class="muted">Combine images into a single PDF.</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/convert/pdf-to-image">
+        <h3>PDF → Image</h3>
+        <p class="muted">Export each PDF page as a PNG.</p>
+        <span class="btn">Open</span>
+      </a>
+    </div>
+  </section>
+{% endblock %}

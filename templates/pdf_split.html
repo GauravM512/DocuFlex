@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}DocuFlex • Split PDF{% endblock %}
+{% block header_title %}Split PDF{% endblock %}
+{% block header_subtitle %}Extract a selected page range from a PDF.{% endblock %}
+
+{% block header_actions %}
+  <a class="btn outline" href="/pdf">Back</a>
+  <a class="btn outline" href="/">Home</a>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <form class="tool" data-endpoint="/api/pdf/split">
+      <h3>Upload PDF</h3>
+      <div class="dropzone" data-multiple="false">
+        <input id="splitPdfInput" type="file" name="file" accept=".pdf" />
+        <span>Drop PDF or click to upload</span>
+      </div>
+      <p class="muted">Preview loads from PDF. Click pages to select.</p>
+      <div id="splitGrid" class="page-grid"></div>
+      <p id="splitCount" class="muted">0 page(s) selected</p>
+      <input id="pagesInput" type="hidden" name="pages" data-require-selection="true" required />
+      <input type="text" name="filename" placeholder="Output filename (optional)" />
+      <button class="btn">Split</button>
+      <div class="status"></div>
+    </form>
+  </section>
+{% endblock %}

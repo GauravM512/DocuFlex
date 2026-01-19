@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}DocuFlex • PDF Utilities{% endblock %}
+{% block header_subtitle %}PDF Utilities{% endblock %}
+
+{% block header_actions %}
+  <a class="btn outline" href="/">Home</a>
+  <a class="btn outline" href="/convert">Conversion</a>
+  <a class="btn outline" href="/ocr">OCR</a>
+  <a class="btn outline" href="/qr">QR Generator</a>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h2>PDF Utilities</h2>
+    <div class="grid">
+      <a class="tool link-card" href="/pdf/merge">
+        <h3>Merge PDFs</h3>
+        <p class="muted">Combine multiple PDFs into one file.</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/pdf/split">
+        <h3>Split PDF</h3>
+        <p class="muted">Extract a range of pages.</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/pdf/reorder">
+        <h3>Reorder Pages</h3>
+        <p class="muted">Define a custom page order.</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/pdf/compress">
+        <h3>Compress PDF</h3>
+        <p class="muted">Optimize and reduce PDF size.</p>
+        <span class="btn">Open</span>
+      </a>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}DocuFlex • OCR PDF{% endblock %}
+{% block header_title %}OCR PDF{% endblock %}
+{% block header_subtitle %}Extract text from scanned PDFs.{% endblock %}
+
+{% block header_actions %}
+  <a class="btn outline" href="/ocr">Back</a>
+  <a class="btn outline" href="/">Home</a>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <form class="tool" data-endpoint="/api/ocr/pdf">
+      <h3>Upload PDF</h3>
+      <div class="dropzone" data-multiple="false">
+        <input type="file" name="file" accept=".pdf" />
+        <span>Drop PDF or click to upload</span>
+      </div>
+      <button class="btn">Extract Text</button>
+      <div class="status"></div>
+    </form>
+  </section>
+{% endblock %}

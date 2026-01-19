@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}DocuFlex • Reorder PDF{% endblock %}
+{% block header_title %}Reorder PDF{% endblock %}
+{% block header_subtitle %}Define a custom page order for your PDF.{% endblock %}
+
+{% block header_actions %}
+  <a class="btn outline" href="/pdf">Back</a>
+  <a class="btn outline" href="/">Home</a>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <form class="tool" data-endpoint="/api/pdf/reorder">
+      <h3>Upload PDF</h3>
+      <div class="dropzone" data-multiple="false">
+        <input id="reorderPdfInput" type="file" name="file" accept=".pdf" />
+        <span>Drop PDF or click to upload</span>
+      </div>
+      <p class="muted">Preview loads from PDF. Drag pages to reorder.</p>
+      <div id="reorderGrid" class="page-grid"></div>
+      <input id="orderInput" type="hidden" name="order" data-require-selection="true" required />
+      <input type="text" name="filename" placeholder="Output filename (optional)" />
+      <button class="btn">Reorder</button>
+      <div class="status"></div>
+    </form>
+  </section>
+{% endblock %}

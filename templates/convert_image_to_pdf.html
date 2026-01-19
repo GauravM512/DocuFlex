@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}DocuFlex • Image → PDF{% endblock %}
+{% block header_title %}Image → PDF{% endblock %}
+{% block header_subtitle %}Combine multiple images into a PDF.{% endblock %}
+
+{% block header_actions %}
+  <a class="btn outline" href="/convert">Back</a>
+  <a class="btn outline" href="/">Home</a>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <form class="tool" data-endpoint="/api/convert/image-to-pdf">
+      <h3>Upload Images</h3>
+      <div class="dropzone" data-multiple="true">
+        <input type="file" name="files" accept="image/*" multiple />
+        <span>Drop images or click to upload</span>
+      </div>
+      <input type="text" name="filename" placeholder="Output filename (optional)" />
+      <button class="btn">Convert</button>
+      <div class="status"></div>
+    </form>
+  </section>
+{% endblock %}

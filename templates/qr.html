@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro QR Code Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/static/favicon/site.webmanifest" />
+    <!-- Load the QR Code Styling Library -->
+    <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-body: #f3f4f6;
+            --bg-panel: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --danger: #ef4444;
+            --radius: 8px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background: var(--bg-panel);
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        h1 { font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--primary); }
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .logo { width: 36px; height: 36px; object-fit: contain; }
+        .header-actions { font-size: 0.875rem; color: var(--text-muted); }
+
+        /* --- Main Layout --- */
+        .dashboard {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar (Settings) --- */
+        .sidebar {
+            width: 340px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .control-group { margin-bottom: 24px; }
+        .control-group h3 {
+            margin: 0 0 12px 0;
+            font-size: 0.875rem;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .input-wrapper { margin-bottom: 12px; }
+        
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        input[type="text"], 
+        input[type="number"], 
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus, 
+        input[type="number"]:focus,
+        select:focus { border-color: var(--primary); }
+
+        /* Range Sliders */
+        .range-container { display: flex; align-items: center; gap: 8px; }
+        input[type="range"] { flex: 1; cursor: pointer; }
+        .range-val { font-size: 0.75rem; width: 40px; text-align: right; font-variant-numeric: tabular-nums;}
+
+        /* Color Pickers */
+        .color-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        input[type="color"] {
+            border: none; width: 32px; height: 32px; cursor: pointer; background: none; padding: 0;
+        }
+        
+        /* File Input */
+        input[type="file"] {
+            font-size: 0.8rem;
+        }
+
+        /* --- Preview Area --- */
+        .main-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 20px 20px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .preview-card {
+            background: white;
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 100%;
+        }
+
+        #qr-container {
+            width: 300px;
+            height: 300px;
+            /* Container flex to center the canvas generated by the library */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        
+        .btn-secondary { background: white; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-secondary:hover { background: var(--bg-body); }
+
+        /* --- History Panel --- */
+        .history-panel {
+            width: 280px;
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .history-item {
+            display: flex;
+            gap: 12px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.2s;
+            background: white;
+        }
+
+        .history-item:hover { border-color: var(--primary); }
+        .history-item:active { transform: scale(0.98); }
+
+        .history-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 4px;
+            background: #eee;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .history-date { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 2px; }
+        .history-text { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+        
+        .history-actions {
+            margin-top: 4px;
+        }
+        
+        .btn-sm {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            background: white;
+            cursor: pointer;
+            float: right;
+        }
+        .btn-sm:hover { background: #fef2f2; }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        #toast.show { opacity: 1; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .dashboard { flex-direction: column; overflow-y: auto; }
+            .sidebar, .history-panel { width: 100%; height: auto; border-right: none; border-left: none; border-bottom: 1px solid var(--border); }
+            .main-stage { min-height: 400px; }
+            body { overflow: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <img class="logo" src="/static/logo.png" alt="DocuFlex logo">
+        <h1>QR Generator <span style="color:var(--text-muted); font-weight:400;">Pro</span></h1>
+    </div>
+    <div class="header-actions">v1.0.0</div>
+</header>
+
+<div class="dashboard">
+    <!-- SIDEBAR: SETTINGS -->
+    <aside class="sidebar">
+        <div class="sidebar-header">Configuration</div>
+        <div class="sidebar-content">
+            
+            <!-- Content -->
+            <div class="control-group">
+                <h3>Content</h3>
+                <div class="input-wrapper">
+                    <label>URL or Text</label>
+                    <input type="text" id="inp-text" value="https://example.com" placeholder="https://...">
+                </div>
+                <div class="input-wrapper">
+                    <label>Center Logo (Image)</label>
+                    <input type="file" id="inp-image" accept="image/*">
+                </div>
+            </div>
+
+            <!-- Colors -->
+            <div class="control-group">
+                <h3>Colors</h3>
+                <div class="color-row">
+                    <input type="color" id="inp-bg-color" value="#ffffff">
+                    <label style="margin:0">Background</label>
+                </div>
+                <div class="color-row">
+                    <input type="color" id="inp-dots-color" value="#000000">
+                    <label style="margin:0">Dots</label>
+                </div>
+                <div class="color-row">
+                    <input type="color" id="inp-corner-sq-color" value="#000000">
+                    <label style="margin:0">Corners (Square)</label>
+                </div>
+                <div class="color-row">
+                    <input type="color" id="inp-corner-dot-color" value="#000000">
+                    <label style="margin:0">Corners (Dot)</label>
+                </div>
+            </div>
+
+            <!-- Dimensions & Shapes -->
+            <div class="control-group">
+                <h3>Dimensions (px)</h3>
+                <div class="input-wrapper">
+                    <label>Width & Height</label>
+                    <div class="range-container">
+                        <input type="range" id="inp-size" min="100" max="1000" step="10" value="300">
+                        <span class="range-val" id="val-size">300</span>
+                    </div>
+                </div>
+                <div class="input-wrapper">
+                    <label>Margin (Quiet Zone)</label>
+                    <div class="range-container">
+                        <input type="range" id="inp-margin" min="0" max="50" step="1" value="10">
+                        <span class="range-val" id="val-margin">10</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced -->
+            <div class="control-group">
+                <h3>Advanced Styling</h3>
+                <div class="input-wrapper">
+                    <label>Dot Style / Border Radius</label>
+                    <!-- Simulating Border Radius with style types supported by library -->
+                    <select id="inp-dot-style">
+                        <option value="square">Square (0px)</option>
+                        <option value="dots">Dots (Rounded)</option>
+                        <option value="rounded">Rounded (Medium)</option>
+                        <option value="extra-rounded">Extra Rounded</option>
+                        <option value="classy">Classy</option>
+                        <option value="classy-rounded">Classy Rounded</option>
+                    </select>
+                </div>
+                <div class="input-wrapper">
+                    <label>Corner Square Style</label>
+                    <select id="inp-corner-sq-style">
+                        <option value="square">Square</option>
+                        <option value="dot">Dot</option>
+                        <option value="extra-rounded">Extra Rounded</option>
+                    </select>
+                </div>
+                <div class="input-wrapper">
+                    <label>Corner Dot Style</label>
+                    <select id="inp-corner-dot-style">
+                        <option value="square">Square</option>
+                        <option value="dot">Dot</option>
+                        <option value="extra-rounded">Extra Rounded</option>
+                    </select>
+                </div>
+                <div class="input-wrapper">
+                    <label>Image Margin (px)</label>
+                    <div class="range-container">
+                        <input type="range" id="inp-image-margin" min="0" max="20" step="1" value="5">
+                        <span class="range-val" id="val-image-margin">5</span>
+                    </div>
+                </div>
+                <div class="input-wrapper">
+                    <label>Image Size (Ratio)</label>
+                    <div class="range-container">
+                        <input type="range" id="inp-image-size" min="0.1" max="0.6" step="0.05" value="0.4">
+                        <span class="range-val" id="val-image-size">0.40</span>
+                    </div>
+                </div>
+                <div class="input-wrapper">
+                    <label>Hide Background Dots Behind Image</label>
+                    <select id="inp-hide-bg-dots">
+                        <option value="true" selected>Yes</option>
+                        <option value="false">No</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- QR Options -->
+            <div class="control-group">
+                <h3>QR Options</h3>
+                <div class="input-wrapper">
+                    <label>Type Number (0 = auto)</label>
+                    <input type="number" id="inp-type-number" min="0" max="40" value="0">
+                </div>
+                <div class="input-wrapper">
+                    <label>Error Correction</label>
+                    <select id="inp-error-correction">
+                        <option value="L">L (7%)</option>
+                        <option value="M" selected>M (15%)</option>
+                        <option value="Q">Q (25%)</option>
+                        <option value="H">H (30%)</option>
+                    </select>
+                </div>
+                <div class="input-wrapper">
+                    <label>Render Type</label>
+                    <select id="inp-render-type">
+                        <option value="svg" selected>SVG</option>
+                        <option value="canvas">Canvas</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Gradients -->
+            <div class="control-group">
+                <h3>Gradients</h3>
+                <div class="input-wrapper">
+                    <label>Dots Gradient</label>
+                    <select id="inp-dots-gradient">
+                        <option value="none" selected>None</option>
+                        <option value="linear">Linear</option>
+                        <option value="radial">Radial</option>
+                    </select>
+                </div>
+                <div class="input-wrapper gradient-group" data-gradient-target="dots">
+                    <label>Dots Gradient Color 1</label>
+                    <input type="color" id="inp-dots-grad-1" value="#000000">
+                </div>
+                <div class="input-wrapper gradient-group" data-gradient-target="dots">
+                    <label>Dots Gradient Color 2</label>
+                    <input type="color" id="inp-dots-grad-2" value="#4f46e5">
+                </div>
+                <div class="input-wrapper gradient-group" data-gradient-target="dots">
+                    <label>Dots Gradient Rotation</label>
+                    <div class="range-container">
+                        <input type="range" id="inp-dots-grad-rot" min="0" max="360" step="5" value="0">
+                        <span class="range-val" id="val-dots-grad-rot">0</span>
+                    </div>
+                </div>
+
+                <div class="input-wrapper">
+                    <label>Background Gradient</label>
+                    <select id="inp-bg-gradient">
+                        <option value="none" selected>None</option>
+                        <option value="linear">Linear</option>
+                        <option value="radial">Radial</option>
+                    </select>
+                </div>
+                <div class="input-wrapper gradient-group" data-gradient-target="bg">
+                    <label>Background Gradient Color 1</label>
+                    <input type="color" id="inp-bg-grad-1" value="#ffffff">
+                </div>
+                <div class="input-wrapper gradient-group" data-gradient-target="bg">
+                    <label>Background Gradient Color 2</label>
+                    <input type="color" id="inp-bg-grad-2" value="#dbeafe">
+                </div>
+                <div class="input-wrapper gradient-group" data-gradient-target="bg">
+                    <label>Background Gradient Rotation</label>
+                    <div class="range-container">
+                        <input type="range" id="inp-bg-grad-rot" min="0" max="360" step="5" value="0">
+                        <span class="range-val" id="val-bg-grad-rot">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN STAGE -->
+    <main class="main-stage">
+        <div class="preview-card">
+            <div id="qr-container"></div>
+            <div class="actions">
+                <button class="btn btn-secondary" id="btn-save-history">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Save
+                </button>
+                <button class="btn btn-primary" id="btn-download">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download
+                </button>
+            </div>
+            <div class="input-wrapper" style="width:100%;">
+                <label>Download Format</label>
+                <select id="inp-download-format">
+                    <option value="png" selected>PNG</option>
+                    <option value="jpeg">JPEG</option>
+                    <option value="svg">SVG</option>
+                    <option value="webp">WEBP</option>
+                </select>
+            </div>
+        </div>
+    </main>
+
+    <!-- HISTORY PANEL -->
+    <aside class="history-panel">
+        <div class="sidebar-header">History (Local)</div>
+        <div class="history-list" id="history-list">
+            <!-- Items injected here by JS -->
+            <div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:0.85rem;">No saved codes yet.</div>
+        </div>
+    </aside>
+</div>
+
+<div id="toast">Saved to history!</div>
+
+<script>
+    /**
+     * QR Code Generator Logic
+     * Uses 'qr-code-styling' for generation and 'IndexedDB' for storage.
+     */
+
+    // 1. Initialize QR Code Instance
+    const PREVIEW_SIZE = 300;
+    const qrCode = new QRCodeStyling({
+        width: PREVIEW_SIZE,
+        height: PREVIEW_SIZE,
+        type: "svg",
+        data: "https://example.com",
+        image: "",
+        dotsOptions: { color: "#000000", type: "square" },
+        backgroundOptions: { color: "#ffffff" },
+        imageOptions: { crossOrigin: "anonymous", margin: 5 },
+        cornersSquareOptions: { type: "square", color: "#000000" },
+        cornersDotOptions: { type: "square", color: "#000000" },
+        qrOptions: { margin: 10 } // API uses 'margin' differently than CSS margin, it's quiet zone
+    });
+
+    // 2. DOM Elements
+    const container = document.getElementById("qr-container");
+    const inputs = {
+        text: document.getElementById("inp-text"),
+        bgColor: document.getElementById("inp-bg-color"),
+        dotsColor: document.getElementById("inp-dots-color"),
+        cornerSqColor: document.getElementById("inp-corner-sq-color"),
+        cornerDotColor: document.getElementById("inp-corner-dot-color"),
+        size: document.getElementById("inp-size"),
+        margin: document.getElementById("inp-margin"),
+        dotStyle: document.getElementById("inp-dot-style"),
+        cornerSqStyle: document.getElementById("inp-corner-sq-style"),
+        cornerDotStyle: document.getElementById("inp-corner-dot-style"),
+        imageMargin: document.getElementById("inp-image-margin"),
+        imageSize: document.getElementById("inp-image-size"),
+        hideBgDots: document.getElementById("inp-hide-bg-dots"),
+        typeNumber: document.getElementById("inp-type-number"),
+        errorCorrection: document.getElementById("inp-error-correction"),
+        renderType: document.getElementById("inp-render-type"),
+        dotsGradient: document.getElementById("inp-dots-gradient"),
+        dotsGrad1: document.getElementById("inp-dots-grad-1"),
+        dotsGrad2: document.getElementById("inp-dots-grad-2"),
+        dotsGradRot: document.getElementById("inp-dots-grad-rot"),
+        bgGradient: document.getElementById("inp-bg-gradient"),
+        bgGrad1: document.getElementById("inp-bg-grad-1"),
+        bgGrad2: document.getElementById("inp-bg-grad-2"),
+        bgGradRot: document.getElementById("inp-bg-grad-rot"),
+        downloadFormat: document.getElementById("inp-download-format"),
+        image: document.getElementById("inp-image")
+    };
+    const labels = {
+        size: document.getElementById("val-size"),
+        margin: document.getElementById("val-margin"),
+        imageMargin: document.getElementById("val-image-margin"),
+        imageSize: document.getElementById("val-image-size"),
+        dotsGradRot: document.getElementById("val-dots-grad-rot"),
+        bgGradRot: document.getElementById("val-bg-grad-rot")
+    };
+    const toast = document.getElementById("toast");
+    const historyList = document.getElementById("history-list");
+
+    // Initial Render
+    qrCode.append(container);
+
+    // 3. State & Debounce
+    let currentImageBase64 = "";
+    let debounceTimer;
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+
+    // 4. Update Function
+    function buildOptions(sizePx) {
+        // Update labels for sliders
+        labels.size.textContent = inputs.size.value;
+        labels.margin.textContent = inputs.margin.value;
+        labels.imageMargin.textContent = inputs.imageMargin.value;
+        labels.imageSize.textContent = parseFloat(inputs.imageSize.value).toFixed(2);
+        labels.dotsGradRot.textContent = inputs.dotsGradRot.value;
+        labels.bgGradRot.textContent = inputs.bgGradRot.value;
+
+        // Construct Options Object
+        const options = {
+            type: inputs.renderType.value,
+            width: sizePx,
+            height: sizePx, // Keep square
+            data: inputs.text.value,
+            backgroundOptions: { color: inputs.bgColor.value },
+            dotsOptions: {
+                color: inputs.dotsColor.value,
+                type: inputs.dotStyle.value
+            },
+            cornersSquareOptions: {
+                color: inputs.cornerSqColor.value,
+                type: inputs.cornerSqStyle.value
+            },
+            cornersDotOptions: {
+                color: inputs.cornerDotColor.value,
+                type: inputs.cornerDotStyle.value
+            },
+            qrOptions: {
+                margin: parseInt(inputs.margin.value),
+                typeNumber: parseInt(inputs.typeNumber.value),
+                errorCorrectionLevel: inputs.errorCorrection.value
+            },
+            imageOptions: {
+                margin: parseInt(inputs.imageMargin.value),
+                imageSize: parseFloat(inputs.imageSize.value),
+                hideBackgroundDots: inputs.hideBgDots.value === "true"
+            }
+        };
+
+        if (inputs.dotsGradient.value !== "none") {
+            options.dotsOptions.gradient = {
+                type: inputs.dotsGradient.value,
+                rotation: (parseInt(inputs.dotsGradRot.value) * Math.PI) / 180,
+                colorStops: [
+                    { offset: 0, color: inputs.dotsGrad1.value },
+                    { offset: 1, color: inputs.dotsGrad2.value }
+                ]
+            };
+        } else {
+            options.dotsOptions.gradient = null;
+        }
+
+        if (inputs.bgGradient.value !== "none") {
+            options.backgroundOptions.gradient = {
+                type: inputs.bgGradient.value,
+                rotation: (parseInt(inputs.bgGradRot.value) * Math.PI) / 180,
+                colorStops: [
+                    { offset: 0, color: inputs.bgGrad1.value },
+                    { offset: 1, color: inputs.bgGrad2.value }
+                ]
+            };
+        } else {
+            options.backgroundOptions.gradient = null;
+        }
+
+        if (currentImageBase64) {
+            options.image = currentImageBase64;
+        } else {
+            options.image = "";
+        }
+        return options;
+    }
+
+    function updateQR() {
+        const options = buildOptions(PREVIEW_SIZE);
+        qrCode.update(options);
+    }
+
+    // 5. Event Listeners
+    // Attach listeners to all inputs for real-time preview
+    Object.values(inputs).forEach(input => {
+        if(input) { // check if element exists
+            input.addEventListener('input', () => {
+                // Debounce text input heavily to prevent lag, others immediate
+                if (input === inputs.text) {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(updateQR, 300);
+                } else {
+                    updateQR();
+                }
+            });
+        }
+    });
+
+    function toggleGradientOptions() {
+        document.querySelectorAll(".gradient-group[data-gradient-target='dots']").forEach(el => {
+            el.style.display = inputs.dotsGradient.value === "none" ? "none" : "block";
+        });
+        document.querySelectorAll(".gradient-group[data-gradient-target='bg']").forEach(el => {
+            el.style.display = inputs.bgGradient.value === "none" ? "none" : "block";
+        });
+    }
+
+    inputs.dotsGradient.addEventListener("change", () => {
+        toggleGradientOptions();
+        updateQR();
+    });
+    inputs.bgGradient.addEventListener("change", () => {
+        toggleGradientOptions();
+        updateQR();
+    });
+
+    // Image File Handling
+    inputs.image.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentImageBase64 = event.target.result;
+                updateQR();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            currentImageBase64 = "";
+            updateQR();
+        }
+    });
+
+    // Download Button
+    document.getElementById("btn-download").addEventListener("click", () => {
+        const exportSize = parseInt(inputs.size.value);
+        const exportOptions = buildOptions(exportSize);
+        qrCode.update(exportOptions);
+        qrCode.download({ name: "qr-code", extension: inputs.downloadFormat.value });
+        setTimeout(() => {
+            qrCode.update(buildOptions(PREVIEW_SIZE));
+        }, 50);
+        showToast("Downloading QR Code...");
+    });
+
+    // 6. IndexedDB Logic
+    const DB_NAME = "QRGeneratorDB";
+    const STORE_NAME = "history";
+    let db;
+
+    function initDB() {
+        const request = indexedDB.open(DB_NAME, 1);
+        
+        request.onupgradeneeded = (event) => {
+            db = event.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                const objectStore = db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+                objectStore.createIndex("date", "date", { unique: false });
+            }
+        };
+
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            loadHistory();
+        };
+
+        request.onerror = (event) => {
+            console.error("IndexedDB error:", event.target.errorCode);
+        };
+    }
+
+    function saveToHistory() {
+        if (!db) return;
+        
+        // Generate a thumbnail (raw data URL)
+        qrCode.getRawData("png").then((buffer) => {
+            const blob = new Blob([buffer], {type: "image/png"});
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = () => {
+                const base64data = reader.result;
+                
+                const record = {
+                    date: new Date().toLocaleString(),
+                    text: inputs.text.value,
+                    config: {
+                        bgColor: inputs.bgColor.value,
+                        dotsColor: inputs.dotsColor.value,
+                        cornerSqColor: inputs.cornerSqColor.value,
+                        cornerDotColor: inputs.cornerDotColor.value,
+                        size: inputs.size.value,
+                        margin: inputs.margin.value,
+                        dotStyle: inputs.dotStyle.value,
+                        cornerSqStyle: inputs.cornerSqStyle.value,
+                        cornerDotStyle: inputs.cornerDotStyle.value,
+                        imageMargin: inputs.imageMargin.value,
+                        imageSize: inputs.imageSize.value,
+                        hideBgDots: inputs.hideBgDots.value,
+                        typeNumber: inputs.typeNumber.value,
+                        errorCorrection: inputs.errorCorrection.value,
+                        renderType: inputs.renderType.value,
+                        dotsGradient: inputs.dotsGradient.value,
+                        dotsGrad1: inputs.dotsGrad1.value,
+                        dotsGrad2: inputs.dotsGrad2.value,
+                        dotsGradRot: inputs.dotsGradRot.value,
+                        bgGradient: inputs.bgGradient.value,
+                        bgGrad1: inputs.bgGrad1.value,
+                        bgGrad2: inputs.bgGrad2.value,
+                        bgGradRot: inputs.bgGradRot.value,
+                        downloadFormat: inputs.downloadFormat.value
+                        // Note: We are not saving the actual uploaded logo in DB to save space
+                    },
+                    thumbnail: base64data
+                };
+
+                const transaction = db.transaction([STORE_NAME], "readwrite");
+                transaction.objectStore(STORE_NAME).add(record);
+                
+                transaction.oncomplete = () => {
+                    showToast("Saved to History");
+                    loadHistory();
+                };
+            };
+        });
+    }
+
+    function loadHistory() {
+        if (!db) return;
+        const transaction = db.transaction([STORE_NAME], "readonly");
+        const objectStore = transaction.objectStore(STORE_NAME);
+        const request = objectStore.getAll();
+
+        request.onsuccess = (event) => {
+            const records = event.target.result;
+            renderHistory(records.reverse()); // Show newest first
+        };
+    }
+
+    function deleteFromHistory(id, event) {
+        event.stopPropagation(); // Prevent clicking the item
+        const transaction = db.transaction([STORE_NAME], "readwrite");
+        transaction.objectStore(STORE_NAME).delete(id);
+        transaction.oncomplete = loadHistory;
+    }
+
+    function renderHistory(records) {
+        historyList.innerHTML = "";
+        if (records.length === 0) {
+            historyList.innerHTML = `<div style="text-align:center; color:var(--text-muted); margin-top:20px; font-size:0.85rem;">No saved codes yet.</div>`;
+            return;
+        }
+
+        records.forEach(rec => {
+            const item = document.createElement("div");
+            item.className = "history-item";
+            item.innerHTML = `
+                <img src="${rec.thumbnail}" class="history-thumb" alt="QR Thumb">
+                <div class="history-info">
+                    <div class="history-date">${rec.date}</div>
+                    <div class="history-text" title="${rec.text}">${rec.text}</div>
+                </div>
+                <div class="history-actions">
+                     <button class="btn-sm">Del</button>
+                </div>
+            `;
+            
+            // Restore Logic
+            item.addEventListener("click", () => {
+                // Restore Inputs
+                inputs.text.value = rec.text;
+                inputs.bgColor.value = rec.config.bgColor;
+                inputs.dotsColor.value = rec.config.dotsColor;
+                inputs.cornerSqColor.value = rec.config.cornerSqColor;
+                inputs.cornerDotColor.value = rec.config.cornerDotColor;
+                inputs.size.value = rec.config.size;
+                inputs.margin.value = rec.config.margin;
+                inputs.dotStyle.value = rec.config.dotStyle;
+                inputs.cornerSqStyle.value = rec.config.cornerSqStyle || "square";
+                inputs.cornerDotStyle.value = rec.config.cornerDotStyle || "square";
+                inputs.imageMargin.value = rec.config.imageMargin;
+                inputs.imageSize.value = rec.config.imageSize || "0.4";
+                inputs.hideBgDots.value = rec.config.hideBgDots || "true";
+                inputs.typeNumber.value = rec.config.typeNumber || "0";
+                inputs.errorCorrection.value = rec.config.errorCorrection || "M";
+                inputs.renderType.value = rec.config.renderType || "svg";
+                inputs.dotsGradient.value = rec.config.dotsGradient || "none";
+                inputs.dotsGrad1.value = rec.config.dotsGrad1 || "#000000";
+                inputs.dotsGrad2.value = rec.config.dotsGrad2 || "#4f46e5";
+                inputs.dotsGradRot.value = rec.config.dotsGradRot || "0";
+                inputs.bgGradient.value = rec.config.bgGradient || "none";
+                inputs.bgGrad1.value = rec.config.bgGrad1 || "#ffffff";
+                inputs.bgGrad2.value = rec.config.bgGrad2 || "#dbeafe";
+                inputs.bgGradRot.value = rec.config.bgGradRot || "0";
+                inputs.downloadFormat.value = rec.config.downloadFormat || "png";
+
+                // Trigger update
+                updateQR();
+                showToast("Configuration Loaded");
+            });
+
+            // Delete Logic
+            const delBtn = item.querySelector(".btn-sm");
+            delBtn.addEventListener("click", (e) => deleteFromHistory(rec.id, e));
+
+            historyList.appendChild(item);
+        });
+    }
+
+    document.getElementById("btn-save-history").addEventListener("click", saveToHistory);
+
+    // Initialize
+    initDB();
+    toggleGradientOptions();
+    updateQR();
+
+</script>
+</body>
+</html>

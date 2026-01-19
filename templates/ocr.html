@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}DocuFlex • OCR{% endblock %}
+{% block header_subtitle %}OCR{% endblock %}
+
+{% block header_actions %}
+  <a class="btn outline" href="/">Home</a>
+  <a class="btn outline" href="/convert">Conversion</a>
+  <a class="btn outline" href="/pdf">PDF Utilities</a>
+  <a class="btn outline" href="/qr">QR Generator</a>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h2>OCR</h2>
+    <div class="grid">
+      <a class="tool link-card" href="/ocr/image">
+        <h3>Image → Text</h3>
+        <p class="muted">Extract text from JPG/PNG images.</p>
+        <span class="btn">Open</span>
+      </a>
+
+      <a class="tool link-card" href="/ocr/pdf">
+        <h3>PDF → Text</h3>
+        <p class="muted">Extract text from scanned PDFs.</p>
+        <span class="btn">Open</span>
+      </a>
+    </div>
+  </section>
+{% endblock %}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}DocuFlex{% endblock %}</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
+  <link rel="manifest" href="/static/favicon/site.webmanifest" />
+  <link rel="stylesheet" href="/static/styles.css" />
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      <img class="logo" src="/static/logo.png" alt="DocuFlex logo" />
+      <div>
+        <h1>{% block header_title %}DocuFlex{% endblock %}</h1>
+        <p>{% block header_subtitle %}Stateless document utility toolbox{% endblock %}</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      {% block header_actions %}{% endblock %}
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>DocuFlex • TYBCA Final Year Project</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
