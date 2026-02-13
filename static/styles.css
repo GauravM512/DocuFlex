@@ -203,6 +203,14 @@ input[type="number"]:focus {
   transform: translateY(1px);
 }
 
+body.dark .btn {
+  color: #1c1b1f;
+}
+
+body.dark .btn.outline {
+  color: var(--text);
+}
+
 .btn.outline {
   background: transparent;
   color: var(--text);
