@@ -4,7 +4,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from routes.convert import router as convert_router
-from routes.ocr import router as ocr_router
 from routes.pdf_utils import router as pdf_router
 from services.file_utils import ensure_dirs
 
@@ -15,7 +14,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(convert_router)
 app.include_router(pdf_router)
-app.include_router(ocr_router)
 
 
 @app.on_event("startup")
@@ -43,9 +41,9 @@ async def convert_pdf_to_word_page(request: Request):
     return templates.TemplateResponse("convert_pdf_to_word.html", {"request": request})
 
 
-@app.get("/convert/word-to-pdf", response_class=HTMLResponse)
-async def convert_word_to_pdf_page(request: Request):
-    return templates.TemplateResponse("convert_word_to_pdf.html", {"request": request})
+@app.get("/convert/common-to-pdf", response_class=HTMLResponse)
+async def convert_common_to_pdf_page(request: Request):
+    return templates.TemplateResponse("convert_common_to_pdf.html", {"request": request})
 
 
 @app.get("/convert/image-to-pdf", response_class=HTMLResponse)
@@ -81,18 +79,3 @@ async def pdf_reorder_page(request: Request):
 @app.get("/pdf/compress", response_class=HTMLResponse)
 async def pdf_compress_page(request: Request):
     return templates.TemplateResponse("pdf_compress.html", {"request": request})
-
-
-@app.get("/ocr", response_class=HTMLResponse)
-async def ocr_page(request: Request):
-    return templates.TemplateResponse("ocr.html", {"request": request})
-
-
-@app.get("/ocr/image", response_class=HTMLResponse)
-async def ocr_image_page(request: Request):
-    return templates.TemplateResponse("ocr_image.html", {"request": request})
-
-
-@app.get("/ocr/pdf", response_class=HTMLResponse)
-async def ocr_pdf_page(request: Request):
-    return templates.TemplateResponse("ocr_pdf.html", {"request": request})

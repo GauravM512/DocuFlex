@@ -160,6 +160,7 @@ const initPdfThumbnailUI = () => {
   const reorderInput = document.getElementById("reorderPdfInput");
   const reorderGrid = document.getElementById("reorderGrid");
   const reorderOrderInput = document.getElementById("orderInput");
+  let currentDropTarget = null;
 
   const splitInput = document.getElementById("splitPdfInput");
   const splitGrid = document.getElementById("splitGrid");
@@ -205,6 +206,43 @@ const initPdfThumbnailUI = () => {
   };
 
   if (reorderInput && reorderGrid && reorderOrderInput) {
+    const animateReorder = (container, beforeRects) => {
+      const items = Array.from(container.querySelectorAll(".page-item"));
+      items.forEach((el) => {
+        const before = beforeRects.get(el);
+        const after = el.getBoundingClientRect();
+        if (!before) return;
+        const deltaX = before.left - after.left;
+        const deltaY = before.top - after.top;
+        if (deltaX !== 0 || deltaY !== 0) {
+          if (typeof el.animate === "function") {
+            el.animate(
+              [
+                { transform: `translate(${deltaX}px, ${deltaY}px)` },
+                { transform: "translate(0, 0)" },
+              ],
+              {
+                duration: 320,
+                easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+              }
+            );
+          } else {
+            el.style.transition = "none";
+            el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            requestAnimationFrame(() => {
+              el.style.transition = "transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1)";
+              el.style.transform = "";
+              const clearTransition = () => {
+                el.style.transition = "";
+                el.removeEventListener("transitionend", clearTransition);
+              };
+              el.addEventListener("transitionend", clearTransition);
+            });
+          }
+        }
+      });
+    };
+
     const updateOrder = () => {
       const pages = Array.from(reorderGrid.querySelectorAll(".page-item")).map(
         (el) => el.dataset.page
@@ -216,16 +254,66 @@ const initPdfThumbnailUI = () => {
       item.draggable = true;
       item.addEventListener("dragstart", (e) => {
         e.dataTransfer.setData("text/plain", item.dataset.page);
+        e.dataTransfer.effectAllowed = "move";
         item.classList.add("dragging");
       });
-      item.addEventListener("dragend", () => item.classList.remove("dragging"));
-      item.addEventListener("dragover", (e) => e.preventDefault());
+      item.addEventListener("dragend", () => {
+        item.classList.remove("dragging");
+        if (currentDropTarget) {
+          currentDropTarget.classList.remove("drop-target");
+          currentDropTarget = null;
+        }
+      });
+      item.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        const draggedEl = reorderGrid.querySelector(".page-item.dragging");
+        if (!draggedEl || draggedEl === item) return;
+
+        const rect = item.getBoundingClientRect();
+        const insertAfter = e.clientX > rect.left + rect.width / 2;
+        const referenceNode = insertAfter ? item.nextSibling : item;
+
+        if (referenceNode === draggedEl || draggedEl.nextSibling === referenceNode) {
+          return;
+        }
+
+        const beforeRects = new Map(
+          Array.from(reorderGrid.querySelectorAll(".page-item")).map((el) => [
+            el,
+            el.getBoundingClientRect(),
+          ])
+        );
+
+        reorderGrid.insertBefore(draggedEl, referenceNode);
+        animateReorder(reorderGrid, beforeRects);
+        updateOrder();
+      });
+      item.addEventListener("dragenter", (e) => {
+        e.preventDefault();
+        if (item.classList.contains("dragging")) return;
+        if (currentDropTarget && currentDropTarget !== item) {
+          currentDropTarget.classList.remove("drop-target");
+        }
+        currentDropTarget = item;
+        item.classList.add("drop-target");
+      });
+      item.addEventListener("dragleave", () => {
+        if (currentDropTarget === item) {
+          item.classList.remove("drop-target");
+          currentDropTarget = null;
+        }
+      });
       item.addEventListener("drop", (e) => {
         e.preventDefault();
-        const draggedPage = e.dataTransfer.getData("text/plain");
-        const draggedEl = reorderGrid.querySelector(`[data-page="${draggedPage}"]`);
-        if (draggedEl && draggedEl !== item) {
-          reorderGrid.insertBefore(draggedEl, item);
+        if (currentDropTarget) {
+          currentDropTarget.classList.remove("drop-target");
+          currentDropTarget = null;
+        }
+        const draggedEl = reorderGrid.querySelector(".page-item.dragging");
+        if (draggedEl) {
+          draggedEl.classList.add("moved");
+          setTimeout(() => draggedEl.classList.remove("moved"), 260);
           updateOrder();
         }
       });

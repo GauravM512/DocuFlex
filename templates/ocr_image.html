@@ -1,24 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}DocuFlex • OCR Image{% endblock %}
-{% block header_title %}OCR Image{% endblock %}
-{% block header_subtitle %}Extract text from JPG/PNG images.{% endblock %}
+{% block title %}DocuFlex • Feature Disabled{% endblock %}
+{% block header_title %}Feature Disabled{% endblock %}
+{% block header_subtitle %}OCR is removed for now.{% endblock %}
 
 {% block header_actions %}
-  <a class="btn outline" href="/ocr">Back</a>
   <a class="btn outline" href="/">Home</a>
 {% endblock %}
 
 {% block content %}
   <section class="card">
-    <form class="tool" data-endpoint="/api/ocr/image">
-      <h3>Upload Image</h3>
-      <div class="dropzone" data-multiple="false">
-        <input type="file" name="file" accept=".jpg,.jpeg,.png" />
-        <span>Drop image or click to upload</span>
-      </div>
-      <button class="btn">Extract Text</button>
-      <div class="status"></div>
-    </form>
+    <p class="muted">OCR is currently disabled in this build.</p>
   </section>
 {% endblock %}

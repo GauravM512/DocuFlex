@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}DocuFlex • Common Document → PDF{% endblock %}
+{% block header_title %}Common Document → PDF{% endblock %}
+{% block header_subtitle %}Convert Office and text documents to PDF using LibreOffice headless.{% endblock %}
+
+{% block header_actions %}
+  <a class="btn outline" href="/convert">Back</a>
+  <a class="btn outline" href="/">Home</a>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <form class="tool" data-endpoint="/api/convert/common-to-pdf">
+      <h3>Upload Document</h3>
+      <div class="dropzone" data-multiple="false">
+        <input type="file" name="file" accept=".doc,.docx,.odt,.rtf,.txt,.xls,.xlsx,.ods,.csv,.ppt,.pptx,.odp" />
+        <span>Drop DOC/XLS/PPT (or similar) or click to upload</span>
+      </div>
+      <input type="text" name="filename" placeholder="Output filename (optional)" />
+      <button class="btn">Convert</button>
+      <p class="muted">Supported: DOC, DOCX, ODT, RTF, TXT, XLS, XLSX, ODS, CSV, PPT, PPTX, ODP</p>
+      <div class="status"></div>
+    </form>
+  </section>
+{% endblock %}

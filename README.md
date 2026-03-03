@@ -1,7 +1,7 @@
 DocuFlex
 ========
 
-DocuFlex is a stateless, on-the-go document utility web app built with FastAPI and a lightweight HTML/CSS/JS frontend. It provides PDF conversion, PDF utilities, QR generation, and OCR without using any database or authentication.
+DocuFlex is a stateless, on-the-go document utility web app built with FastAPI and a lightweight HTML/CSS/JS frontend. It provides PDF conversion, PDF utilities, and QR generation without using any database or authentication.
 
 Project Abstract
 ----------------
@@ -13,12 +13,12 @@ Objectives
 - Implement core conversion and PDF tools using reliable Python libraries.
 - Ensure stateless processing with automatic file cleanup.
 - Demonstrate secure file handling and graceful error responses.
-- Offer QR code generation and OCR features for extra utility.
+- Offer QR code generation for extra utility.
 
 Scope
 -----
 - PDF to Word (text-based extraction)
-- Word to PDF (text-based rendering)
+- Common document to PDF (LibreOffice headless)
 - JPG/PNG to PDF
 - PDF to image (PNG per page)
 - Merge PDFs
@@ -26,7 +26,6 @@ Scope
 - Reorder PDF pages
 - Compress PDF (optimize/deflate)
 - QR generation (frontend-only at /qr)
-- OCR from image or PDF
 - Dark mode UI toggle
 
 Why No Database?
@@ -41,7 +40,7 @@ System Architecture
 -------------------
 1. Client submits file(s) using HTML/JS.
 2. FastAPI receives the file via UploadFile, validates size and type.
-3. Service layer performs processing using PyMuPDF, Pillow, and OCR.
+3. Service layer performs processing using PyMuPDF and Pillow.
 4. Output is returned as a download response.
 5. Temporary input/output files are deleted automatically.
 6. QR codes are generated directly in the browser using JavaScript.
@@ -52,12 +51,10 @@ Folder Structure
 - routes/
   - convert.py
   - pdf_utils.py
-  - ocr.py
 - services/
   - file_utils.py
   - convert_service.py
   - pdf_service.py
-  - ocr_service.py
 - templates/
   - index.html
 - static/
@@ -69,20 +66,16 @@ Folder Structure
 
 Module Description
 ------------------
-- routes/convert.py: Conversion endpoints (PDF ↔ DOCX, image ↔ PDF).
+- routes/convert.py: Conversion endpoints (PDF ↔ DOCX, image ↔ PDF, common docs → PDF).
 - routes/pdf_utils.py: PDF utilities (merge, split, reorder, compress).
-- routes/ocr.py: OCR endpoints for images and PDFs.
 - services/file_utils.py: File validation, size limits, safe storage, cleanup.
-- services/convert_service.py: Conversion logic using PyMuPDF, pdf2docx, Pillow.
+- services/convert_service.py: Conversion logic using PyMuPDF, pdf2docx, Pillow, LibreOffice headless.
 - services/pdf_service.py: PDF operations with page handling and optimization.
-- services/ocr_service.py: OCR pipeline for images and PDFs using Tesseract.
 - templates/index.html: Landing page that links to individual tools.
 - templates/convert.html: Conversion category page.
 - templates/pdf.html: PDF utilities category page.
-- templates/ocr.html: OCR category page.
 - templates/convert_*.html: Single-function conversion pages.
 - templates/pdf_*.html: Single-function PDF utility pages.
-- templates/ocr_*.html: Single-function OCR pages.
 - templates/qr.html: Advanced frontend QR generator dashboard.
 - static/styles.css: Material-inspired UI styles and dark mode.
 - static/app.js: Frontend logic for uploads, status messages, and downloads.
@@ -96,13 +89,11 @@ Security and Safety
 
 Limitations
 -----------
-- Word to PDF and PDF to Word are text-based and may not preserve complex formatting.
+- PDF to Word is text-based and may not preserve complex formatting.
 - Compression is an optimization/deflate pass and may not significantly reduce size for already optimized PDFs.
-- OCR quality depends on image clarity and installed Tesseract engine.
 
 Future Enhancements
 -------------------
-- Multi-language OCR support and language selection.
 - Advanced PDF conversion (layout-preserving).
 - Batch processing and progress tracking.
 - Server-side rate limiting and load control.
@@ -123,7 +114,7 @@ Viva Questions & Answers
 	File size limits, type validation, UUID filenames, and automatic deletion prevent misuse.
 
 5. What are the key libraries used?
-	PyMuPDF for PDF processing, Pillow for images, pdf2docx for PDF-to-DOCX, pytesseract for OCR.
+	PyMuPDF for PDF processing, Pillow for images, pdf2docx for PDF-to-DOCX.
 
 6. What are the limitations?
 	Advanced formatting in Word/PDF conversions may not be preserved.
@@ -131,8 +122,8 @@ Viva Questions & Answers
 7. How would you scale this application?
 	Use object storage, background processing, and container orchestration.
 
-8. How does OCR work here?
-	PDFs are rendered to images, then pytesseract extracts text from each image.
+8. Is OCR available right now?
+	OCR is currently disabled in this build.
 
 9. How is error handling done?
 	FastAPI raises HTTP exceptions with clear, user-friendly messages.
@@ -145,17 +136,15 @@ Setup and Run
 1. Create and activate a Python environment.
 2. Install dependencies:
 	pip install -r requirements.txt
-3. Install Tesseract OCR engine (required for OCR endpoints):
-	- Windows: https://github.com/UB-Mannheim/tesseract/wiki
-4. Start the server:
+3. Start the server:
 	uvicorn main:app --reload
-5. Open:
+4. Open:
 	http://127.0.0.1:8000
 	API docs: http://127.0.0.1:8000/docs
 
 Deployment (Optional)
 ---------------------
-- Render/Railway: Use the same uvicorn command, ensure system package for Tesseract is installed.
+- Render/Railway: Use the same uvicorn command.
 - Docker:
 	- Build: docker build -t docuflex .
 	- Run: docker run -p 8000:8000 docuflex

@@ -17,6 +17,20 @@ MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 ALLOWED_PDF = {".pdf"}
 ALLOWED_IMAGES = {".jpg", ".jpeg", ".png"}
 ALLOWED_DOCX = {".docx"}
+ALLOWED_COMMON_DOCS = {
+    ".doc",
+    ".docx",
+    ".odt",
+    ".rtf",
+    ".txt",
+    ".xls",
+    ".xlsx",
+    ".ods",
+    ".csv",
+    ".ppt",
+    ".pptx",
+    ".odp",
+}
 
 
 def ensure_dirs() -> None:
