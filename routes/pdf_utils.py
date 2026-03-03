@@ -88,11 +88,12 @@ async def reorder(
 async def compress(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    quality: int = Form(60),
+    dpi: int = Form(72),
+    quality: int = Form(50),
     filename: str | None = Form(None),
 ):
     pdf_path = save_upload_file(file, ALLOWED_PDF)
-    output_path = compress_pdf(pdf_path, quality=quality)
+    output_path = compress_pdf(pdf_path, dpi=dpi, quality=quality)
     background_tasks.add_task(safe_cleanup, [pdf_path, output_path])
     safe_name = sanitize_filename(filename, "compressed.pdf", ".pdf")
     return FileResponse(output_path, filename=safe_name)

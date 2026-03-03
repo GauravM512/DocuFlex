@@ -2,7 +2,7 @@
 
 {% block title %}DocuFlex • Compress PDF{% endblock %}
 {% block header_title %}Compress PDF{% endblock %}
-{% block header_subtitle %}Optimize and reduce PDF file size.{% endblock %}
+{% block header_subtitle %}Compress by rasterizing pages with lower DPI and JPEG quality.{% endblock %}
 
 {% block header_actions %}
   <a class="btn outline" href="/pdf">Back</a>
@@ -18,9 +18,22 @@
         <span>Drop PDF or click to upload</span>
       </div>
       <div class="range">
-        <label for="qualityRange">Quality: <span id="qualityValue" data-range-value data-for="qualityRange">60</span></label>
-        <input id="qualityRange" type="range" name="quality" min="1" max="100" value="60" />
+        <label for="dpiRange">DPI: <span data-range-value data-for="dpiRange">72</span></label>
+        <input id="dpiRange" type="range" name="dpi" min="30" max="300" value="72" />
       </div>
+      <div class="range">
+        <label for="qualityRange">Quality: <span id="qualityValue" data-range-value data-for="qualityRange">50</span></label>
+        <input id="qualityRange" type="range" name="quality" min="1" max="100" value="50" />
+      </div>
+      <p class="muted">
+        <strong>DPI</strong> controls resolution (sharpness). Lower DPI = smaller file, blurrier text/images. Higher DPI = clearer output, bigger file.
+      </p>
+      <p class="muted">
+        <strong>Quality</strong> controls JPEG compression. Lower quality = more compression artifacts and smaller file. Higher quality = cleaner image and larger file.
+      </p>
+      <p class="muted">
+        Suggested ranges: Web share <strong>72–96 DPI / 40–60</strong>, Balanced <strong>110–150 DPI / 55–75</strong>, Near print <strong>180–240 DPI / 75–90</strong>.
+      </p>
       <input type="text" name="filename" placeholder="Output filename (optional)" />
       <button class="btn">Compress</button>
       <div class="status"></div>

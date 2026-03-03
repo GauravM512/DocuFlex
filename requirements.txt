@@ -5,6 +5,5 @@ jinja2==3.1.4
 pymupdf==1.24.14
 pillow==10.4.0
 pdf2docx==0.5.8
-pypdf==4.3.1
 
 # https://mirrors.in.sahilister.net/tdf/libreoffice/portable/25.2.7/LibreOfficePortablePrevious_25.2.7_MultilingualStandard.paf.exe

@@ -24,7 +24,7 @@ Scope
 - Merge PDFs
 - Split PDF by page range
 - Reorder PDF pages
-- Compress PDF (optimize/deflate)
+- Compress PDF (DPI + JPEG quality)
 - QR generation (frontend-only at /qr)
 - Dark mode UI toggle
 
@@ -90,7 +90,7 @@ Security and Safety
 Limitations
 -----------
 - PDF to Word is text-based and may not preserve complex formatting.
-- Compression is an optimization/deflate pass and may not significantly reduce size for already optimized PDFs.
+- Compression rasterizes pages; text/vector content may lose sharpness at low DPI.
 
 Future Enhancements
 -------------------

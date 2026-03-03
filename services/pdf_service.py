@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
 from typing import List
 
 import pymupdf
-from pypdf import PdfWriter
 from fastapi import HTTPException
+from PIL import Image
 
 from services.file_utils import create_output_path, validate_page_range
 
@@ -84,20 +85,49 @@ def reorder_pdf_pages(pdf_path: Path, page_order: List[int]) -> Path:
         raise HTTPException(status_code=400, detail=f"Reorder failed: {exc}")
 
 
-def compress_pdf(pdf_path: Path, quality: int = 60) -> Path:
+def compress_pdf(pdf_path: Path, dpi: int = 72, quality: int = 50) -> Path:
     output_path = create_output_path(".pdf")
+    doc = None
+    compressed_doc = None
     try:
+        if dpi < 30 or dpi > 300:
+            raise HTTPException(status_code=400, detail="DPI must be between 30 and 300")
         if quality < 1 or quality > 100:
             raise HTTPException(status_code=400, detail="Quality must be between 1 and 100")
-        writer = PdfWriter(clone_from=str(pdf_path))
-        for page in writer.pages:
-            for img in page.images:
-                img.replace(img.image, quality=quality)
-        with output_path.open("wb") as f:
-            writer.write(f)
+
+        doc = pymupdf.open(pdf_path)
+        compressed_doc = pymupdf.open()
+
+        for page_num in range(doc.page_count):
+            page = doc.load_page(page_num)
+            pix = page.get_pixmap(dpi=dpi, alpha=False)
+
+            image = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+            img_buffer = BytesIO()
+            image.save(img_buffer, format="JPEG", quality=quality, optimize=True)
+            image.close()
+            img_buffer.seek(0)
+
+            new_page = compressed_doc.new_page(width=page.rect.width, height=page.rect.height)
+            new_page.insert_image(page.rect, stream=img_buffer.read())
+
+        compressed_doc.save(output_path, deflate=True)
         return output_path
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Compress failed: {exc}")
+    finally:
+        try:
+            if compressed_doc is not None:
+                compressed_doc.close()
+        except Exception:
+            pass
+        try:
+            if doc is not None:
+                doc.close()
+        except Exception:
+            pass
 
 
 def pdf_to_images(pdf_path: Path, dpi: int = 200) -> List[Path]:
