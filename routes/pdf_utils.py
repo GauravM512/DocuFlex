@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from typing import List
 
-import base64
-
 from fastapi import APIRouter, BackgroundTasks, File, Form, UploadFile, HTTPException
 from fastapi.responses import FileResponse
 
 from services.file_utils import ALLOWED_PDF, safe_cleanup, sanitize_filename, save_multiple_uploads, save_upload_file
-from services.pdf_service import compress_pdf, merge_pdfs, pdf_to_images, reorder_pdf_pages, split_pdf_by_pages, split_pdf_by_range
+from services.pdf_service import compress_pdf, merge_pdfs, pdf_to_preview_data_urls, reorder_pdf_pages, split_pdf_by_pages, split_pdf_by_range
 
 router = APIRouter(prefix="/api/pdf", tags=["pdf-utils"])
 
@@ -16,13 +14,8 @@ router = APIRouter(prefix="/api/pdf", tags=["pdf-utils"])
 @router.post("/preview")
 async def preview(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     pdf_path = save_upload_file(file, ALLOWED_PDF)
-    image_paths = pdf_to_images(pdf_path)
-    pages = []
-    for idx, path in enumerate(image_paths, start=1):
-        data = path.read_bytes()
-        data_url = "data:image/png;base64," + base64.b64encode(data).decode("utf-8")
-        pages.append({"page": idx, "dataUrl": data_url})
-    background_tasks.add_task(safe_cleanup, [pdf_path, *image_paths])
+    pages = pdf_to_preview_data_urls(pdf_path)
+    background_tasks.add_task(safe_cleanup, [pdf_path])
     return {"pages": pages}
 
 

@@ -183,7 +183,10 @@ const initPdfThumbnailUI = () => {
     }
 
     const data = await response.json();
-    data.pages.forEach((page) => {
+    const fragment = document.createDocumentFragment();
+
+    for (let i = 0; i < data.pages.length; i += 1) {
+      const page = data.pages[i];
       const item = document.createElement("div");
       item.className = "page-item";
       item.dataset.page = String(page.page);
@@ -191,18 +194,27 @@ const initPdfThumbnailUI = () => {
       const img = document.createElement("img");
       img.src = page.dataUrl;
       img.alt = `Page ${page.page}`;
+      img.loading = "lazy";
+      img.decoding = "async";
 
       const label = document.createElement("span");
       label.textContent = `Page ${page.page}`;
 
       item.appendChild(img);
       item.appendChild(label);
-      container.appendChild(item);
+      fragment.appendChild(item);
 
       if (onItemReady) {
         onItemReady(item);
       }
-    });
+
+      if ((i + 1) % 12 === 0) {
+        container.appendChild(fragment);
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      }
+    }
+
+    container.appendChild(fragment);
   };
 
   if (reorderInput && reorderGrid && reorderOrderInput) {

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -8,6 +9,7 @@ from routes.pdf_utils import router as pdf_router
 from services.file_utils import ensure_dirs
 
 app = FastAPI(title="DocuFlex", version="1.0.0")
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")

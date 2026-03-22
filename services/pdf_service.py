@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from io import BytesIO
 from pathlib import Path
 from typing import List
@@ -146,3 +147,44 @@ def pdf_to_images(pdf_path: Path, dpi: int = 200) -> List[Path]:
         for p in output_paths:
             p.unlink(missing_ok=True)
         raise HTTPException(status_code=400, detail=f"PDF to image failed: {exc}")
+
+
+def pdf_to_preview_data_urls(pdf_path: Path, dpi: int = 72, quality: int = 42) -> List[dict]:
+    pages: List[dict] = []
+    doc = None
+    try:
+        if dpi < 50 or dpi > 200:
+            raise HTTPException(status_code=400, detail="Preview DPI must be between 50 and 200")
+        if quality < 20 or quality > 95:
+            raise HTTPException(status_code=400, detail="Preview quality must be between 20 and 95")
+
+        doc = pymupdf.open(pdf_path)
+
+        # Adaptive quality for large PDFs to keep previews responsive.
+        effective_dpi = dpi
+        effective_quality = quality
+        if doc.page_count > 40:
+            effective_dpi = min(effective_dpi, 68)
+            effective_quality = min(effective_quality, 40)
+        if doc.page_count > 120:
+            effective_dpi = min(effective_dpi, 58)
+            effective_quality = min(effective_quality, 34)
+
+        for page_num in range(doc.page_count):
+            page = doc.load_page(page_num)
+            pix = page.get_pixmap(dpi=effective_dpi, colorspace=pymupdf.csGRAY, alpha=False)
+            img_bytes = pix.tobytes(output="jpeg", jpg_quality=effective_quality)
+            data_url = "data:image/jpeg;base64," + base64.b64encode(img_bytes).decode("ascii")
+            pages.append({"page": page_num + 1, "dataUrl": data_url})
+
+        return pages
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Preview failed: {exc}")
+    finally:
+        try:
+            if doc is not None:
+                doc.close()
+        except Exception:
+            pass
