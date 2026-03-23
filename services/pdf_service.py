@@ -163,18 +163,35 @@ def pdf_to_preview_data_urls(pdf_path: Path, dpi: int = 72, quality: int = 42) -
         # Adaptive quality for large PDFs to keep previews responsive.
         effective_dpi = dpi
         effective_quality = quality
+        max_preview_side = 960
         if doc.page_count > 40:
             effective_dpi = min(effective_dpi, 68)
             effective_quality = min(effective_quality, 40)
+            max_preview_side = min(max_preview_side, 800)
         if doc.page_count > 120:
             effective_dpi = min(effective_dpi, 58)
             effective_quality = min(effective_quality, 34)
+            max_preview_side = min(max_preview_side, 640)
+        if doc.page_count > 250:
+            effective_dpi = min(effective_dpi, 50)
+            effective_quality = min(effective_quality, 30)
+            max_preview_side = min(max_preview_side, 520)
+
+        data_url_prefix = "data:image/jpeg;base64,"
+        base_scale = effective_dpi / 72.0
 
         for page_num in range(doc.page_count):
             page = doc.load_page(page_num)
-            pix = page.get_pixmap(dpi=effective_dpi, colorspace=pymupdf.csGRAY, alpha=False)
+            page_max_side = max(page.rect.width, page.rect.height)
+            scaled_limit = max_preview_side / page_max_side if page_max_side else base_scale
+            render_scale = min(base_scale, scaled_limit)
+            pix = page.get_pixmap(
+                matrix=pymupdf.Matrix(render_scale, render_scale),
+                alpha=False,
+                annots=False,
+            )
             img_bytes = pix.tobytes(output="jpeg", jpg_quality=effective_quality)
-            data_url = "data:image/jpeg;base64," + base64.b64encode(img_bytes).decode("ascii")
+            data_url = data_url_prefix + base64.b64encode(img_bytes).decode("ascii")
             pages.append({"page": page_num + 1, "dataUrl": data_url})
 
         return pages
