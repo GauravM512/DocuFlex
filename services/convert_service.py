@@ -18,10 +18,40 @@ from pdf2docx import Converter
 # Project root (DocuFlex/) resolved from this file location
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# LibreOffice portable Python executable (relative to project root)
-LO_PYTHON_PATH = PROJECT_ROOT / "libreoffice" / "App" / "libreoffice" / "program" / "python.exe"
+# LibreOffice Python executable (portable on Windows, system install on Linux)
+LO_PYTHON_PATH_WINDOWS = PROJECT_ROOT / "libreoffice" / "App" / "libreoffice" / "program" / "python.exe"
+LO_PYTHON_PATH_LINUX_CANDIDATES = (
+    Path("/usr/bin/python3"),
+)
+
 # Path to the worker script we just created
 WORKER_SCRIPT = Path(__file__).parent / "uno_worker.py"
+
+def resolve_lo_python_path() -> Path:
+    env_path = os.environ.get("LO_PYTHON_PATH")
+    if env_path:
+        candidate = Path(env_path)
+        if not candidate.exists():
+            raise HTTPException(
+                status_code=500,
+                detail=f"LO_PYTHON_PATH is set but not found: {candidate}"
+            )
+        return candidate
+
+    if sys.platform.startswith("win") and LO_PYTHON_PATH_WINDOWS.exists():
+        return LO_PYTHON_PATH_WINDOWS
+
+    for candidate in LO_PYTHON_PATH_LINUX_CANDIDATES:
+        if candidate.exists():
+            return candidate
+
+    raise HTTPException(
+        status_code=500,
+        detail=(
+            "LibreOffice Python executable not found. "
+            "Set LO_PYTHON_PATH to your LibreOffice python binary."
+        ),
+    )
 
 def pdf_to_word(pdf_path: Path) -> Path:
     output_path = create_output_path(".docx")
@@ -59,13 +89,12 @@ def common_document_to_pdf(doc_path: Path) -> Path:
     """
     output_path = create_output_path(".pdf")
 
-    if not LO_PYTHON_PATH.exists():
-         raise HTTPException(status_code=500, detail="LibreOffice Python executable not found.")
+    lo_python = resolve_lo_python_path()
 
     # Construct the command
     # Syntax: <lo_python.exe> <worker_script.py> <input> <output>
     cmd = [
-        str(LO_PYTHON_PATH),
+        str(lo_python),
         str(WORKER_SCRIPT),
         str(doc_path.resolve()),
         str(output_path.resolve())
