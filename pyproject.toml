@@ -12,4 +12,5 @@ dependencies = [
     "pymupdf>=1.24.14",
     "pillow>=10.4.0",
     "pdf2docx>=0.5.8",
+    "gunicorn>=25.3.0",
 ]
