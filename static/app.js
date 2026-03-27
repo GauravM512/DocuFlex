@@ -6,10 +6,15 @@ const setStatus = (form, text, isError = false) => {
   status.style.color = isError ? "#d64545" : "";
 };
 
-const downloadBlob = async (response) => {
+const downloadBlob = async (response, fallbackFilename = "") => {
   const disposition = response.headers.get("Content-Disposition") || "";
-  const match = disposition.match(/filename="?([^\"]+)"?/);
-  const filename = match ? match[1] : "output";
+  const utf8Match = disposition.match(/filename\*\s*=\s*([^']*)''([^;]+)/i);
+  const standardMatch = disposition.match(/filename="?([^\";]+)"?/i);
+  const filename = utf8Match
+    ? decodeURIComponent(utf8Match[2])
+    : standardMatch
+      ? standardMatch[1]
+      : fallbackFilename || "output";
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -48,7 +53,22 @@ const handleSubmit = async (event) => {
     return;
   }
 
-  const formData = new FormData(form);
+  let formData;
+  const isMergeForm = endpoint === "/api/pdf/merge";
+
+  if (isMergeForm) {
+    formData = new FormData();
+    const mergeInput = form.querySelector("#mergePdfInput");
+    const mergeFiles = Array.from((mergeInput && mergeInput._selectedFiles) || (mergeInput && mergeInput.files) || []);
+    mergeFiles.forEach((file) => formData.append("files", file));
+
+    const filenameInput = form.querySelector('input[name="filename"]');
+    if (filenameInput) {
+      formData.append("filename", filenameInput.value);
+    }
+  } else {
+    formData = new FormData(form);
+  }
 
   try {
     setStatus(form, "Processing...");
@@ -70,7 +90,10 @@ const handleSubmit = async (event) => {
       return;
     }
 
-    await downloadBlob(response);
+    const filenameInput = form.querySelector('input[name="filename"]');
+    const fallbackFilename = filenameInput ? filenameInput.value.trim() : "";
+
+    await downloadBlob(response, fallbackFilename);
     setStatus(form, "Success! Download started.");
   } catch (err) {
     setStatus(form, err.message, true);
@@ -155,6 +178,176 @@ rangeWrappers.forEach((wrapper) => {
     range.addEventListener("change", updateValue);
   }
 });
+
+const initMergePdfUI = () => {
+  const mergeInput = document.getElementById("mergePdfInput");
+  const mergeList = document.getElementById("mergeFileList");
+
+  if (!mergeInput || !mergeList) {
+    return;
+  }
+
+  let selectedFiles = [];
+  let draggedIndex = null;
+
+  const getFileKey = (file) => `${file.name}__${file.size}__${file.lastModified}`;
+
+  const syncInputFiles = () => {
+    const dataTransfer = new DataTransfer();
+    selectedFiles.forEach((file) => dataTransfer.items.add(file));
+    mergeInput.files = dataTransfer.files;
+    mergeInput._selectedFiles = selectedFiles.slice();
+  };
+
+  const moveFile = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return;
+    if (fromIndex < 0 || toIndex < 0) return;
+    if (fromIndex >= selectedFiles.length || toIndex >= selectedFiles.length) return;
+
+    const beforeRects = new Map(
+      Array.from(mergeList.querySelectorAll(".file-card")).map((row) => [
+        row.dataset.key,
+        row.getBoundingClientRect(),
+      ])
+    );
+
+    const [item] = selectedFiles.splice(fromIndex, 1);
+    selectedFiles.splice(toIndex, 0, item);
+    syncInputFiles();
+    renderList(beforeRects);
+  };
+
+  const renderList = (beforeRects = null) => {
+    mergeList.innerHTML = "";
+
+    if (selectedFiles.length === 0) {
+      mergeList.classList.add("empty");
+      mergeList.textContent = "No PDFs selected yet.";
+      return;
+    }
+
+    mergeList.classList.remove("empty");
+    selectedFiles.forEach((file, index) => {
+      const fileKey = getFileKey(file);
+      const row = document.createElement("div");
+      row.className = "file-row file-card";
+      row.draggable = true;
+      row.dataset.key = fileKey;
+      row.dataset.index = String(index);
+
+      const meta = document.createElement("div");
+      meta.className = "file-meta";
+
+      const name = document.createElement("strong");
+      name.textContent = file.name;
+
+      const order = document.createElement("span");
+      order.className = "file-order";
+      order.textContent = `File ${index + 1}`;
+
+      const hint = document.createElement("span");
+      hint.className = "file-hint";
+      hint.textContent = "Drag to reorder";
+
+      const dragHandle = document.createElement("span");
+      dragHandle.className = "drag-handle";
+      dragHandle.textContent = "⋮⋮";
+
+      const textWrap = document.createElement("div");
+      textWrap.className = "file-text";
+
+      meta.appendChild(name);
+      meta.appendChild(order);
+      meta.appendChild(hint);
+
+      textWrap.appendChild(meta);
+
+      row.appendChild(textWrap);
+      row.appendChild(dragHandle);
+
+      row.addEventListener("dragstart", (event) => {
+        draggedIndex = index;
+        row.classList.add("dragging");
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", file.name);
+      });
+
+      row.addEventListener("dragend", () => {
+        row.classList.remove("dragging");
+        draggedIndex = null;
+        mergeList.querySelectorAll(".drop-target").forEach((el) => el.classList.remove("drop-target"));
+      });
+
+      row.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        const targetIndex = Number(row.dataset.index);
+        if (Number.isNaN(targetIndex) || draggedIndex === null || targetIndex === draggedIndex) return;
+        row.classList.add("drop-target");
+        event.dataTransfer.dropEffect = "move";
+      });
+
+      row.addEventListener("dragleave", () => {
+        row.classList.remove("drop-target");
+      });
+
+      row.addEventListener("drop", (event) => {
+        event.preventDefault();
+        row.classList.remove("drop-target");
+        const targetIndex = Number(row.dataset.index);
+        if (Number.isNaN(targetIndex) || draggedIndex === null) return;
+
+        moveFile(draggedIndex, targetIndex);
+        draggedIndex = null;
+      });
+
+      mergeList.appendChild(row);
+    });
+
+    if (!beforeRects) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      mergeList.querySelectorAll(".file-card").forEach((row) => {
+        const before = beforeRects.get(row.dataset.key);
+        if (!before) return;
+
+        const after = row.getBoundingClientRect();
+        const deltaX = before.left - after.left;
+        const deltaY = before.top - after.top;
+        if (deltaX === 0 && deltaY === 0) return;
+
+        if (typeof row.animate === "function") {
+          row.animate(
+            [
+              { transform: `translate(${deltaX}px, ${deltaY}px)` },
+              { transform: "translate(0, 0)" },
+            ],
+            {
+              duration: 260,
+              easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+            }
+          );
+        } else {
+          row.style.transition = "none";
+          row.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+          requestAnimationFrame(() => {
+            row.style.transition = "transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1)";
+            row.style.transform = "";
+          });
+        }
+      });
+    });
+  };
+
+  mergeInput.addEventListener("change", () => {
+    selectedFiles = Array.from(mergeInput.files || []);
+    syncInputFiles();
+    renderList();
+  });
+
+  renderList();
+};
 
 const initPdfThumbnailUI = () => {
   const reorderInput = document.getElementById("reorderPdfInput");
@@ -379,3 +572,4 @@ const initPdfThumbnailUI = () => {
 };
 
 initPdfThumbnailUI();
+initMergePdfUI();
