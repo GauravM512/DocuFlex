@@ -177,7 +177,7 @@ def pdf_to_preview_data_urls(pdf_path: Path, dpi: int = 72, quality: int = 42) -
             effective_quality = min(effective_quality, 30)
             max_preview_side = min(max_preview_side, 520)
 
-        data_url_prefix = "data:image/jpeg;base64,"
+        data_url_prefix = "data:image/webp;base64,"
         base_scale = effective_dpi / 72.0
 
         for page_num in range(doc.page_count):
@@ -190,7 +190,12 @@ def pdf_to_preview_data_urls(pdf_path: Path, dpi: int = 72, quality: int = 42) -
                 alpha=False,
                 annots=False,
             )
-            img_bytes = pix.tobytes(output="jpeg", jpg_quality=effective_quality)
+            image = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+            img_buffer = BytesIO()
+            image.save(img_buffer, format="WEBP", quality=effective_quality, method=6)
+            image.close()
+            img_buffer.seek(0)
+            img_bytes = img_buffer.read()
             data_url = data_url_prefix + base64.b64encode(img_bytes).decode("ascii")
             pages.append({"page": page_num + 1, "dataUrl": data_url})
 

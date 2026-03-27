@@ -15,7 +15,7 @@ MAX_FILE_SIZE_MB = 50
 MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
 ALLOWED_PDF = {".pdf"}
-ALLOWED_IMAGES = {".jpg", ".jpeg", ".png"}
+ALLOWED_IMAGES = {".jpg", ".jpeg", ".png", ".webp"}
 ALLOWED_DOCX = {".docx"}
 ALLOWED_COMMON_DOCS = {
     ".doc",
