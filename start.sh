@@ -36,7 +36,7 @@ echo
 
 echo "Starting DocuFlex..."
 if [ -x ".venv/bin/python" ]; then
-    ./.venv/bin/gunicorn main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 127.0.0.1:8000 --access-logfile - --access-logformat '%(h)s - "%(r)s" %(s)s'
+    ./.venv/bin/gunicorn main:app
 else
     echo "Set Up Virtual Environment"
 fi

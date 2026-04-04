@@ -9,6 +9,8 @@ from typing import List
 from fastapi import HTTPException
 from PIL import Image
 
+import img2pdf
+
 # Import your other utilities
 from services.file_utils import create_output_path
 from services.pdf_service import pdf_to_images
@@ -63,19 +65,27 @@ def pdf_to_word(pdf_path: Path) -> Path:
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"PDF to Word failed: {exc}")
 
+from pathlib import Path
+from typing import List
+import img2pdf
+from fastapi import HTTPException
+
+
 def images_to_pdf(image_paths: List[Path]) -> Path:
     output_path = create_output_path(".pdf")
+
+    if not image_paths:
+        raise HTTPException(status_code=400, detail="No images to convert")
+
     try:
-        images = [Image.open(p).convert("RGB") for p in image_paths]
-        if not images:
-            raise HTTPException(status_code=400, detail="No images to convert")
-        first, rest = images[0], images[1:]
-        first.save(output_path, save_all=True, append_images=rest)
-        for img in images:
-            img.close()
+        # Convert Path objects → strings (img2pdf prefers str)
+        paths = [str(p) for p in image_paths]
+
+        with open(output_path, "wb") as f:
+            f.write(img2pdf.convert(paths))
+
         return output_path
-    except HTTPException:
-        raise
+
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Image to PDF failed: {exc}")
 
