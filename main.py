@@ -8,6 +8,8 @@ from routes.convert import router as convert_router
 from routes.pdf_utils import router as pdf_router
 from services.file_utils import ensure_dirs
 
+import asyncio
+
 app = FastAPI(title="DocuFlex", version="1.0.0")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
@@ -20,6 +22,8 @@ app.include_router(pdf_router)
 
 @app.on_event("startup")
 def startup() -> None:
+    loop = asyncio.get_running_loop()
+    print("Running loop:", type(loop))
     ensure_dirs()
 
 
