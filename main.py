@@ -6,9 +6,8 @@ from fastapi.templating import Jinja2Templates
 
 from routes.convert import router as convert_router
 from routes.pdf_utils import router as pdf_router
+from services.convert_service import start_lo_worker_manager, stop_lo_worker_manager
 from services.file_utils import ensure_dirs
-
-import asyncio
 
 app = FastAPI(title="DocuFlex", version="1.0.0")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
@@ -21,67 +20,71 @@ app.include_router(pdf_router)
 
 
 @app.on_event("startup")
-def startup() -> None:
-    loop = asyncio.get_running_loop()
-    print("Running loop:", type(loop))
+async def startup() -> None:
     ensure_dirs()
+    start_lo_worker_manager()
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    stop_lo_worker_manager()
 
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="index.html", context={})
 
 
 @app.get("/qr", response_class=HTMLResponse)
 async def qr_page(request: Request):
-    return templates.TemplateResponse("qr.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="qr.html", context={})
 
 
 @app.get("/convert", response_class=HTMLResponse)
 async def convert_page(request: Request):
-    return templates.TemplateResponse("convert.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="convert.html", context={})
 
 
 @app.get("/convert/pdf-to-word", response_class=HTMLResponse)
 async def convert_pdf_to_word_page(request: Request):
-    return templates.TemplateResponse("convert_pdf_to_word.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="convert_pdf_to_word.html", context={})
 
 
 @app.get("/convert/common-to-pdf", response_class=HTMLResponse)
 async def convert_common_to_pdf_page(request: Request):
-    return templates.TemplateResponse("convert_common_to_pdf.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="convert_common_to_pdf.html", context={})
 
 
 @app.get("/convert/image-to-pdf", response_class=HTMLResponse)
 async def convert_image_to_pdf_page(request: Request):
-    return templates.TemplateResponse("convert_image_to_pdf.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="convert_image_to_pdf.html", context={})
 
 
 @app.get("/convert/pdf-to-image", response_class=HTMLResponse)
 async def convert_pdf_to_image_page(request: Request):
-    return templates.TemplateResponse("convert_pdf_to_image.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="convert_pdf_to_image.html", context={})
 
 
 @app.get("/pdf", response_class=HTMLResponse)
 async def pdf_page(request: Request):
-    return templates.TemplateResponse("pdf.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="pdf.html", context={})
 
 
 @app.get("/pdf/merge", response_class=HTMLResponse)
 async def pdf_merge_page(request: Request):
-    return templates.TemplateResponse("pdf_merge.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="pdf_merge.html", context={})
 
 
 @app.get("/pdf/split", response_class=HTMLResponse)
 async def pdf_split_page(request: Request):
-    return templates.TemplateResponse("pdf_split.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="pdf_split.html", context={})
 
 
 @app.get("/pdf/reorder", response_class=HTMLResponse)
 async def pdf_reorder_page(request: Request):
-    return templates.TemplateResponse("pdf_reorder.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="pdf_reorder.html", context={})
 
 
 @app.get("/pdf/compress", response_class=HTMLResponse)
 async def pdf_compress_page(request: Request):
-    return templates.TemplateResponse("pdf_compress.html", {"request": request})
+    return templates.TemplateResponse(request=request, name="pdf_compress.html", context={})

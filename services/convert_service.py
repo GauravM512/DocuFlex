@@ -1,18 +1,17 @@
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
 from pathlib import Path
 from typing import List
 
 from fastapi import HTTPException
-from PIL import Image
 
 import img2pdf
 
 # Import your other utilities
 from services.file_utils import create_output_path
+from services.lo_worker_manager import LibreOfficeWorkerManager
 from services.pdf_service import pdf_to_images
 from pdf2docx import Converter
 
@@ -26,8 +25,10 @@ LO_PYTHON_PATH_LINUX_CANDIDATES = (
     Path("/usr/bin/python3"),
 )
 
-# Path to the worker script we just created
+# Path to the worker script
 WORKER_SCRIPT = Path(__file__).parent / "uno_worker.py"
+
+_lo_worker_manager: LibreOfficeWorkerManager | None = None
 
 def resolve_lo_python_path() -> Path:
     env_path = os.environ.get("LO_PYTHON_PATH")
@@ -55,6 +56,28 @@ def resolve_lo_python_path() -> Path:
         ),
     )
 
+
+def get_lo_worker_manager() -> LibreOfficeWorkerManager:
+    global _lo_worker_manager
+    if _lo_worker_manager is None:
+        _lo_worker_manager = LibreOfficeWorkerManager(
+            lo_python=resolve_lo_python_path(),
+            worker_script=WORKER_SCRIPT,
+        )
+    return _lo_worker_manager
+
+
+def start_lo_worker_manager() -> None:
+    get_lo_worker_manager().start()
+
+
+def stop_lo_worker_manager() -> None:
+    global _lo_worker_manager
+    if _lo_worker_manager is not None:
+        _lo_worker_manager.shutdown()
+        _lo_worker_manager = None
+
+
 def pdf_to_word(pdf_path: Path) -> Path:
     output_path = create_output_path(".docx")
     try:
@@ -64,11 +87,6 @@ def pdf_to_word(pdf_path: Path) -> Path:
         return output_path
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"PDF to Word failed: {exc}")
-
-from pathlib import Path
-from typing import List
-import img2pdf
-from fastapi import HTTPException
 
 
 def images_to_pdf(image_paths: List[Path]) -> Path:
@@ -94,55 +112,12 @@ def pdf_to_image(pdf_path: Path) -> List[Path]:
 
 def common_document_to_pdf(doc_path: Path) -> Path:
     """
-    Converts doc to PDF by calling the LO Python worker script via subprocess.
-    Requires the LO Server to be running on port 8100.
+    Converts doc to PDF by sending a job to the persistent LibreOffice worker.
     """
     output_path = create_output_path(".pdf")
-
-    lo_python = resolve_lo_python_path()
-
-    # Construct the command
-    # Syntax: <lo_python.exe> <worker_script.py> <input> <output>
-    cmd = [
-        str(lo_python),
-        str(WORKER_SCRIPT),
-        str(doc_path.resolve()),
-        str(output_path.resolve())
-    ]
-
     try:
-        # Run the worker script
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
-
-        # Check for errors
-        if result.returncode != 0:
-            # Extract error message from worker stderr
-            error_msg = result.stderr.strip() or "Unknown UNO error"
-            # specific check for connection issues
-            if "CONNECTION_ERROR" in error_msg:
-                raise HTTPException(
-                    status_code=503, 
-                    detail="Could not connect to LibreOffice Server. Is it running on port 8100?"
-                )
-            
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Conversion failed: {error_msg}"
-            )
-
-        if not output_path.exists():
-             raise HTTPException(status_code=500, detail="Worker finished but no PDF created.")
-
-        return output_path
-
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=408, detail="Conversion timed out")
+        return get_lo_worker_manager().convert(doc_path.resolve(), output_path.resolve())
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Subprocess error: {exc}")
+        raise HTTPException(status_code=500, detail=f"Conversion error: {exc}")

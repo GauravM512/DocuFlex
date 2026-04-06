@@ -14,7 +14,7 @@ if ! command -v "$SOFFICE_BIN" >/dev/null 2>&1; then
 fi
 
 echo "Starting LibreOffice headless server..."
-"$SOFFICE_BIN" --headless --accept="$LO_ACCEPT" >/tmp/docuflex-lo.log 2>&1 &
+"$SOFFICE_BIN" --headless  --nologo --nofirststartwizard --norestore --nolockcheck --accept="$LO_ACCEPT" >/tmp/docuflex-lo.log 2>&1 &
 LO_PID=$!
 
 cleanup() {
