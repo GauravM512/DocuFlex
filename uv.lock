@@ -85,7 +85,7 @@ dependencies = [
     { name = "pymupdf" },
     { name = "python-multipart" },
     { name = "uvicorn", extra = ["standard"] },
-    { name = "uvloop" },
+    { name = "uvloop", marker = "sys_platform == 'linux'" },
 ]
 
 [package.metadata]
@@ -99,7 +99,7 @@ requires-dist = [
     { name = "pymupdf", specifier = ">=1.24.14" },
     { name = "python-multipart", specifier = ">=0.0.9" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32.1" },
-    { name = "uvloop", specifier = ">=0.22.1" },
+    { name = "uvloop", marker = "sys_platform == 'linux'", specifier = ">=0.21.0" },
 ]
 
 [[package]]
